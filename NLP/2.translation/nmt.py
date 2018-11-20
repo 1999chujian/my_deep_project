@@ -47,23 +47,15 @@ class nmtModel():
 		with tf.variable_scope('encoder'):
 			self.encoder_cell = self.create_rnn_cell()
 			self.initial_state = self.encoder_cell.zero_state(self.batch_size, tf.float32)
-			self.encoder_outputs, self.final_state = tf.nn.dynamic_rnn(self.encoder_cell, 
-																		self.encoder_emb, 
-																		sequence_length=self.encoder_lengths, 
-																		time_major=True, 
-																		initial_state=self.initial_state)
+			self.encoder_outputs, self.final_state = tf.nn.dynamic_rnn(self.encoder_cell, self.encoder_emb, sequence_length=self.encoder_lengths, time_major=True, initial_state=self.initial_state)
 
 	def _init_decoder(self):
 		with tf.variable_scope('decoder_cell'):
 			self.decoder_cell = self.create_rnn_cell()
 			self.memory = tf.transpose(self.encoder_outputs, [1, 0, 2])
 			# Create an attention mechanism
-			self.attention_mechanism = tf.contrib.seq2seq.LuongAttention(self.num_units, 
-																	self.memory, 
-																	memory_sequence_length=self.encoder_lengths)
-			self.decoder_cell = tf.contrib.seq2seq.AttentionWrapper(self.decoder_cell, 
-																self.attention_mechanism, 
-																attention_layer_size=self.num_units)
+			self.attention_mechanism = tf.contrib.seq2seq.LuongAttention(self.num_units, self.memory, memory_sequence_length=self.encoder_lengths)
+			self.decoder_cell = tf.contrib.seq2seq.AttentionWrapper(self.decoder_cell, self.attention_mechanism, attention_layer_size=self.num_units)
 			self.projection_layer = Dense(self.output_vocab_size, use_bias=False)
 			# Helper
 			self.helper = tf.contrib.seq2seq.TrainingHelper(self.decoder_emb, self.decoder_lengths, time_major=True)
