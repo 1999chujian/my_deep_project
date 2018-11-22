@@ -1,25 +1,6 @@
 import numpy as np
 import jieba
 
-
-# ==============判断char是否是乱码===================
-def is_uchar(uchar):
-    """判断一个unicode是否是汉字"""
-    if uchar >= u'\u4e00' and uchar<=u'\u9fa5':
-            return True
-    """判断一个unicode是否是数字"""
-    if uchar >= u'\u0030' and uchar<=u'\u0039':
-            return True       
-    """判断一个unicode是否是英文字母"""
-    if (uchar >= u'\u0041' and uchar<=u'\u005a') or (uchar >= u'\u0061' and uchar<=u'\u007a'):
-            return True
-    if uchar in ('，','。','：','？','“','”','！','；','、','《','》','——','=','*','@','￥','?','.'):
-            return True
-    return False
-
-
-
-
 class GenData():
 	"""docstring for GenData"""
 
@@ -81,7 +62,7 @@ class GenData():
 	        encoder_inputs = self.en_inp_num_data[begin:end]
 	        decoder_inputs = self.de_inp_num[begin:end]
 	        decoder_targets = self.de_out_num[begin:end]
-	        encoder_lengths = [len(line) for line in encoder_inputs]        
+	        encoder_lengths = [len(line) for line in encoder_inputs]
 	        decoder_lengths = [len(line) for line in decoder_inputs]
 	        encoder_max_length = max(encoder_lengths)
 	        decoder_max_length = max(decoder_lengths)
@@ -91,7 +72,7 @@ class GenData():
 	        mask = decoder_targets > 0
 	        target_weights = mask.astype(np.int32)
 	        yield encoder_inputs, decoder_inputs, decoder_targets, target_weights, encoder_lengths, decoder_lengths
-	              
+
 
 
 
@@ -99,4 +80,3 @@ class GenData():
 datav = GenData()
 
 print(datav.input_vocab)
-

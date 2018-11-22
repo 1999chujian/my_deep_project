@@ -95,8 +95,8 @@ class nmtModel():
 				data_generator = data.generator(self.batch_size)
 				for i in range(BATCH_NUMS):
 					en_input, de_input, de_tg, tg_weight, en_len, de_len = next(data_generator)
-					feed = {self.encoder_inputs: en_input, self.decoder_inputs: de_input, self.decoder_targets: de_tg, 
-							self.target_weights: tg_weight, self.encoder_lengths: en_len, self.decoder_lengths: de_len, 
+					feed = {self.encoder_inputs: en_input, self.decoder_inputs: de_input, self.decoder_targets: de_tg,
+							self.target_weights: tg_weight, self.encoder_lengths: en_len, self.decoder_lengths: de_len,
 							self.keepprb: 0.8}
 					costs, _ = sess.run([self.cost, self.opt], feed_dict=feed)
 					total_loss += costs
@@ -104,7 +104,7 @@ class nmtModel():
 						print('epochs:', k + 1, 'iter:', i + 1, 'cost:', total_loss / i + 1)
 						print('input:', ''.join([data.id2inp[i] for i in en_input[:, 0]]))
 						print('output:', ''.join([data.id2out[i] for i in sess.run(self.predict, feed_dict=feed)]))
-						print('label:', ''.join([data.id2out[i] for i in de_tg[:, 0]]))    
+						print('label:', ''.join([data.id2out[i] for i in de_tg[:, 0]]))
 			saver.save(sess, './checkpoints/lstm.ckpt')
 		writer.close()
 
@@ -134,5 +134,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
-
