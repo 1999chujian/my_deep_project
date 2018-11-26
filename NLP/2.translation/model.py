@@ -232,7 +232,7 @@ class BaseModel():
             while True:
                 inputs = input('input english: ')
                 if inputs == 'exit': break
-                encoder_inputs = [[data.inp2id[en] for en in inputs]]
+                encoder_inputs = [[data.inp2id[en]] for en in inputs]
                 encoder_length = [len(encoder_inputs)]
                 feed = {
                     self.encoder_inputs: encoder_inputs,
