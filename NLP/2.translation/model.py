@@ -1,8 +1,9 @@
 import tensorflow as tf
+import jieba
 from tensorflow.python.layers.core import Dense
 import numpy as np
 from utils import attention_mechanism_fn, create_rnn_cell
-
+import os
 
 
 
@@ -10,6 +11,7 @@ class BaseModel():
     """docstring for BaseModel."""
     def __init__(self, params, mode):
         super(BaseModel, self).__init__()
+        tf.reset_default_graph()
         self.mode = mode
         # networks
         self.num_units = params.num_units
@@ -34,7 +36,7 @@ class BaseModel():
         self.tgt_max_len = params.tgt_max_len # 50
         # Default settings works well (rarely need to change)
         self.unit_type = params.unit_type # lstm
-        self.keep_prob = params.keep_prob # 0.2
+        self.keep_prob = params.keep_prob # 0.8
         self.max_gradient_norm = params.max_gradient_norm # 1
         self.batch_size = params.batch_size # 32
         self.num_gpus = params.num_gpus # 1
@@ -184,7 +186,7 @@ class BaseModel():
             elif self.infer_mode == 'beam_search':
                 infer_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
                     cell=cell,
-                    embedding=decoder_embedding,
+                    embedding=self.decoder_embedding,
                     start_tokens=start_tokens,
                     end_token=end_token,
                     initial_state=init_state,
@@ -202,12 +204,17 @@ class BaseModel():
     def train(self, data):
         saver =tf.train.Saver()
         with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            md_name = '_' + str(self.num_layers) + '_' + str(self.num_units)
+            md_file = self.out_dir + md_name
+            if os.path.exists(md_file):
+                print('restore model from ', md_file)
+                saver.restore(sess, md_file + '/model')
             writer = tf.summary.FileWriter(
                 'logs/tensorboard', tf.get_default_graph())
-            sess.run(tf.global_variables_initializer())
             for k in range(self.epochs):
                 total_loss = 0
-                batch_num = len(data.data_list) // self.batch_size
+                batch_num = len(data.data) // self.batch_size
                 data_generator = data.generator(self.batch_size)
                 for i in range(batch_num):
                     en_inp, de_inp, de_tg, mask, en_len, de_len = next(
@@ -219,24 +226,29 @@ class BaseModel():
                         self.mask: mask,
                         self.encoder_input_lengths: en_len,
                         self.decoder_input_lengths: de_len}
-                    sess.run(self.update, feed_dict=feed)
-                print(k)
-            saver.save(sess, './checkpoints/lstm.ckpt')
+                    cost,_ = sess.run([self.cost,self.update], feed_dict=feed)
+                    total_loss += cost
+                print('epochs', k, ': average loss = ', total_loss/batch_num)
+            saver.save(sess, md_file + '/model')
             writer.close()
 
 
     def inference(self, data):
         saver =tf.train.Saver()
         with tf.Session() as sess:
-            saver.restore(sess, './checkpoints/lstm.ckpt')
+            md_name = '_' + str(self.num_layers) + '_' + str(self.num_units)
+            md_file = self.out_dir + md_name
+            print('restore model from ', md_file)
+            saver.restore(sess, md_file + '/model')
             while True:
                 inputs = input('input english: ')
                 if inputs == 'exit': break
-                encoder_inputs = [[data.inp2id[en]] for en in inputs]
+                if data.mode == 'jieba': inputs = jieba.lcut(inputs)
+                encoder_inputs = [[data.en2id[en]] for en in inputs]
                 encoder_length = [len(encoder_inputs)]
                 feed = {
                     self.encoder_inputs: encoder_inputs,
                     self.encoder_input_lengths: encoder_length}
                 predict = sess.run(self.translations, feed_dict=feed)
-                outputs = ''.join([data.id2out[i] for i in predict[0]])
+                outputs = ''.join([data.id2ch[i] for i in predict[0]])
                 print('output chinese:', outputs)
