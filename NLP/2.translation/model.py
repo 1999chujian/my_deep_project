@@ -144,6 +144,7 @@ class BaseModel():
                     labels=self.decoder_targets,
                     logits=logits)
                 self.cost = tf.reduce_sum((loss * self.mask) / self.batch_size)
+                tf.summary.scalar('loss', self.cost)
                 # learning_rate decay
                 self.global_step = tf.Variable(0)
                 self.learning_rate = tf.train.exponential_decay(
@@ -204,14 +205,14 @@ class BaseModel():
     def train(self, data):
         saver =tf.train.Saver()
         with tf.Session() as sess:
+            merged = tf.summary.merge_all()
             sess.run(tf.global_variables_initializer())
             md_name = '_' + str(self.num_layers) + '_' + str(self.num_units)
             md_file = self.out_dir + md_name
-            if os.path.exists(md_file):
-                print('restore model from ', md_file)
+            if os.path.exists(md_file + '/model.meta'):
                 saver.restore(sess, md_file + '/model')
             writer = tf.summary.FileWriter(
-                'logs/tensorboard', tf.get_default_graph())
+                md_file + '/tensorboard', tf.get_default_graph())
             for k in range(self.epochs):
                 total_loss = 0
                 batch_num = len(data.data) // self.batch_size
@@ -228,7 +229,11 @@ class BaseModel():
                         self.decoder_input_lengths: de_len}
                     cost,_ = sess.run([self.cost,self.update], feed_dict=feed)
                     total_loss += cost
-                print('epochs', k, ': average loss = ', total_loss/batch_num)
+                    if (k * batch_num + i) % 10 == 0:
+                        rs=sess.run(merged, feed_dict=feed)
+                        writer.add_summary(rs, k * batch_num + i)
+                if k % 5 == 0:
+                    print('epochs', k, ': average loss = ', total_loss/batch_num)
             saver.save(sess, md_file + '/model')
             writer.close()
 
@@ -238,13 +243,12 @@ class BaseModel():
         with tf.Session() as sess:
             md_name = '_' + str(self.num_layers) + '_' + str(self.num_units)
             md_file = self.out_dir + md_name
-            print('restore model from ', md_file)
             saver.restore(sess, md_file + '/model')
             while True:
                 inputs = input('input english: ')
                 if inputs == 'exit': break
                 if data.mode == 'jieba': inputs = jieba.lcut(inputs)
-                encoder_inputs = [[data.en2id[en]] for en in inputs]
+                encoder_inputs = [[data.en2id.get(en, 3)] for en in inputs]
                 encoder_length = [len(encoder_inputs)]
                 feed = {
                     self.encoder_inputs: encoder_inputs,

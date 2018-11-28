@@ -9,9 +9,9 @@ def create_hparams():
         attention_architecture = 'standard', # standard | gnmt
         optimizer = 'sgd', # sgd , adam
         learning_rate = 1., # sgd:1, Adam:0.0001
-        decay_steps = 1000,
+        decay_steps = 100,
         decay_rate = 0.99,
-        epochs = 10,
+        epochs = 50,
         out_dir = 'logs/model',
         # vocab
         encoder_vocab_size = 50,
