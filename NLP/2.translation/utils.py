@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import jieba
 from pyhanlp import *
+import jieba
 
 
 # attention_mechanism
@@ -15,6 +15,7 @@ def attention_mechanism_fn(attention_type, num_units, memory, encoder_length):
     else:
         raise ValueError('unkown atteion type %s' % attention_type)
     return attention_mechanism
+
 
 # create_rnn_cell
 def create_rnn_cell(unit_type, num_units, num_layers, keep_prob):
@@ -35,6 +36,8 @@ def create_rnn_cell(unit_type, num_units, num_layers, keep_prob):
         [single_rnn_cell() for _ in range(num_layers)])
     return mul_cell
 
+
+
 class GenData(object):
     """docstring for GenData."""
     def __init__(self, filepath='cmn.txt', mode='char', data_length=200):
@@ -47,7 +50,6 @@ class GenData(object):
         self._init_data()
         self._init_vocab()
         self._init_num_data()
-
 
     def _init_data(self):
         with open(self.filepath, 'r', encoding='utf8') as f:
@@ -68,7 +70,14 @@ class GenData(object):
             self.ch_vocab = [word for line in self.ch_list for word in line]
             self.ch_vocab = sorted(set(self.ch_vocab))
         elif self.mode == 'hanlp':
-            pass
+            self.en_list = [[term.word for term in HanLP.segment(line)]
+                for line in self.en_list]
+            self.ch_list = [[term.word for term in HanLP.segment(line)]
+                for line in self.ch_list]
+            self.en_vocab = [word for line in self.en_list for word in line]
+            self.en_vocab = sorted(set(self.en_vocab))
+            self.ch_vocab = [word for line in self.ch_list for word in line]
+            self.ch_vocab = sorted(set(self.ch_vocab))
         else:
             raise ValueError('unknown split mode:', self.mode)
 
