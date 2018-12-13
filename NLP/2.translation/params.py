@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def create_hparams():
     params = tf.contrib.training.HParams(
-        num_units = 256, # Network size
+        num_units = 512, # Network size
         num_layers = 2, # Network depth
         attention_type = 'luong', #  luong | bahdanau | None
         attention_architecture = 'standard', # standard | gnmt
@@ -17,6 +17,9 @@ def create_hparams():
         encoder_vocab_size = 50,
         decoder_vocab_size = 50,
         share_vocab = False,
+        # embedding size
+        encoder_emb_size = 300,
+        decoder_emb_size = 200,
         # Sequence lengths
         src_max_len = 50,
         tgt_max_len = 50,

@@ -1,5 +1,6 @@
 import tensorflow as tf
 import jieba
+from pyhanlp import *
 from tensorflow.python.layers.core import Dense
 import numpy as np
 from utils import attention_mechanism_fn, create_rnn_cell
@@ -247,7 +248,10 @@ class BaseModel():
             while True:
                 inputs = input('input english: ')
                 if inputs == 'exit': break
-                if data.mode == 'jieba': inputs = jieba.lcut(inputs)
+                if data.mode == 'jieba':
+                    inputs = jieba.lcut(inputs)
+                elif data.mode == 'hanlp':
+                    inputs = [term.word for term in HanLP.segment(inputs)]
                 encoder_inputs = [[data.en2id.get(en, 3)] for en in inputs]
                 encoder_length = [len(encoder_inputs)]
                 feed = {

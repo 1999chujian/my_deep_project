@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from pyhanlp import *
 import jieba
-
+import os
 
 # attention_mechanism
 def attention_mechanism_fn(attention_type, num_units, memory, encoder_length):
@@ -58,22 +58,25 @@ class GenData(object):
 
     def _init_vocab(self):
         self.en_list = [line.split('\t')[0] for line in self.data]
+        self.en_list = [str.lower(line) for line in self.en_list]
         self.ch_list = [line.split('\t')[1].strip('\n') for line in self.data]
         if self.mode == 'char':
             self.en_vocab = sorted(list(set(''.join(self.en_list))))
             self.ch_vocab = sorted(list(set(''.join(self.ch_list))))
         elif self.mode == 'jieba':
-            self.en_list = [jieba.lcut(line) for line in self.en_list]
-            self.ch_list = [jieba.lcut(line) for line in self.ch_list]
+            self.en_list = [[char for char in jieba.cut(line) if char != ' ']
+                for line in self.en_list]
+            self.ch_list = [[char for char in jieba.cut(line) if char != ' ']
+                for line in self.ch_list]
             self.en_vocab = [word for line in self.en_list for word in line]
             self.en_vocab = sorted(set(self.en_vocab))
             self.ch_vocab = [word for line in self.ch_list for word in line]
             self.ch_vocab = sorted(set(self.ch_vocab))
         elif self.mode == 'hanlp':
-            self.en_list = [[term.word for term in HanLP.segment(line)]
-                for line in self.en_list]
-            self.ch_list = [[term.word for term in HanLP.segment(line)]
-                for line in self.ch_list]
+            self.en_list = [[term.word for term in HanLP.segment(line)
+                if term.word != ' '] for line in self.en_list]
+            self.ch_list = [[term.word for term in HanLP.segment(line)
+                if term.word != ' '] for line in self.ch_list]
             self.en_vocab = [word for line in self.en_list for word in line]
             self.en_vocab = sorted(set(self.en_vocab))
             self.ch_vocab = [word for line in self.ch_list for word in line]
